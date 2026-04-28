@@ -123,15 +123,15 @@ class App:
 
         cursor.execute("""
             INSERT INTO clients 
-            (nama, nim, jurusan, prodi, tanggal_lahir, tempat_tinggal, jenis_kelamin, alamat)
+            (nama, nim, jurusan, angkatan, tanggal_lahir, tempat_lahir, jenis_kelamin, alamat)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             data["Nama"],
             data["NIM"],
             data["Jurusan"],
-            data["Prodi"],
+            data["Angkatan"],
             data["Tanggal Lahir"],
-            data["Tempat Tinggal"],
+            data["Tempat Lahir"],
             data["Jenis Kelamin"],
             data["Alamat"]
         ))
