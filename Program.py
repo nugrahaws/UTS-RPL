@@ -7,6 +7,7 @@ def init_db():
     conn = sqlite3.connect('users_data.db')
     cursor = conn.cursor()
 
+    # Tabel user login
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -15,14 +16,22 @@ def init_db():
         )
     ''')
 
+    # Tabel client (data lengkap)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS clients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nama TEXT
+            nama TEXT,
+            nim TEXT,
+            jurusan TEXT,
+            prodi TEXT,
+            tanggal_lahir TEXT,
+            tempat_tinggal TEXT,
+            jenis_kelamin TEXT,
+            alamat TEXT
         )
     ''')
 
-    # User default
+    # User default admin
     try:
         cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)",
                        ("admin", "12345"))
@@ -37,7 +46,7 @@ class App:
     def __init__(self, root):
         self.root = root
         self.root.title("Sistem Login & Registrasi")
-        self.root.geometry("400x400")
+        self.root.geometry("400x550")
         self.show_login()
 
     def clear(self):
@@ -83,26 +92,50 @@ class App:
     def show_register(self):
         self.clear()
 
-        tk.Label(self.root, text="REGISTRASI CLIENT", font=("Arial", 14)).pack(pady=20)
+        tk.Label(self.root, text="REGISTRASI CLIENT", font=("Arial", 14)).pack(pady=10)
 
-        tk.Label(self.root, text="Nama").pack()
-        self.nama = tk.Entry(self.root)
-        self.nama.pack()
+        fields = [
+            "Nama", "NIM", "Jurusan", "Prodi",
+            "Tanggal Lahir", "Tempat Tinggal",
+            "Jenis Kelamin", "Alamat"
+        ]
+
+        self.inputs = {}
+
+        for field in fields:
+            tk.Label(self.root, text=field).pack()
+            entry = tk.Entry(self.root)
+            entry.pack(pady=2)
+            self.inputs[field] = entry
 
         tk.Button(self.root, text="Simpan", command=self.save_client).pack(pady=10)
         tk.Button(self.root, text="Kembali", command=self.show_login).pack()
 
     def save_client(self):
-        nama = self.nama.get()
+        data = {k: v.get() for k, v in self.inputs.items()}
 
-        if not nama:
+        if not data["Nama"]:
             messagebox.showwarning("Error", "Nama wajib diisi!")
             return
 
         conn = sqlite3.connect("users_data.db")
         cursor = conn.cursor()
 
-        cursor.execute("INSERT INTO clients (nama) VALUES (?)", (nama,))
+        cursor.execute("""
+            INSERT INTO clients 
+            (nama, nim, jurusan, prodi, tanggal_lahir, tempat_tinggal, jenis_kelamin, alamat)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            data["Nama"],
+            data["NIM"],
+            data["Jurusan"],
+            data["Prodi"],
+            data["Tanggal Lahir"],
+            data["Tempat Tinggal"],
+            data["Jenis Kelamin"],
+            data["Alamat"]
+        ))
+
         conn.commit()
         conn.close()
 
@@ -115,19 +148,19 @@ class App:
 
         tk.Label(self.root, text="PANEL ADMIN", font=("Arial", 14)).pack(pady=10)
 
-        listbox = tk.Listbox(self.root, width=40)
+        listbox = tk.Listbox(self.root, width=60)
         listbox.pack(pady=10)
 
         conn = sqlite3.connect("users_data.db")
         cursor = conn.cursor()
 
-        cursor.execute("SELECT nama FROM clients")
+        cursor.execute("SELECT nama, nim, jurusan, prodi FROM clients")
         data = cursor.fetchall()
         conn.close()
 
         if data:
             for d in data:
-                listbox.insert(tk.END, d[0])
+                listbox.insert(tk.END, f"{d[0]} | {d[1]} | {d[2]} | {d[3]}")
         else:
             listbox.insert(tk.END, "Belum ada data")
 
