@@ -2,118 +2,140 @@ import tkinter as tk
 from tkinter import messagebox
 import sqlite3
 
-# Koneksi ke database
-conn = sqlite3.connect("users.db")
-cursor = conn.cursor()
+# ================= DATABASE =================
+def init_db():
+    conn = sqlite3.connect('users_data.db')
+    cursor = conn.cursor()
 
-# Buat tabel jika belum ada
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT,
-    username TEXT,
-    password TEXT,
-    address TEXT,
-    postcode TEXT
-)
-""")
-conn.commit()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT
+        )
+    ''')
 
-# TAB LOGIN ADMIIN
-def handle_login():
-    username = entry_user.get()
-    password = entry_pass.get()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS clients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nama TEXT
+        )
+    ''')
 
-    # Validasi sederhana
-    if username == "admin" and password == "12345":
-        messagebox.showinfo("Login Berhasil", f"Selamat datang, {username}!")
-        buka_form_registrasi()
-    else:
-        messagebox.showerror("Login Gagal", "Username atau Password salah!")
+    # User default
+    try:
+        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)",
+                       ("admin", "12345"))
+    except:
+        pass
 
-# Inisialisasi Window
-root = tk.Tk()
-root.title("Form Login UTS-RPL")
-root.geometry("300x200")
+    conn.commit()
+    conn.close()
 
-# Label & Entry untuk Username
-tk.Label(root, text="Username:").pack(pady=5)
-entry_user = tk.Entry(root)
-entry_user.pack(pady=5)
+# ================= APP =================
+class App:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Sistem Login & Registrasi")
+        self.root.geometry("400x400")
+        self.show_login()
 
-# Label & Entry untuk Password
-tk.Label(root, text="Password:").pack(pady=5)
-entry_pass = tk.Entry(root, show="*") # Menggunakan '*' agar password tidak terlihat
-entry_pass.pack(pady=5)
+    def clear(self):
+        for w in self.root.winfo_children():
+            w.destroy()
 
-# Tombol Login
-btn_login = tk.Button(root, text="Login", command=handle_login)
-btn_login.pack(pady=20)
+    # ================= LOGIN =================
+    def show_login(self):
+        self.clear()
 
-def handle_login():
-    username = entry_user.get()
-    password = entry_pass.get()
+        tk.Label(self.root, text="LOGIN", font=("Arial", 16, "bold")).pack(pady=20)
 
-    # Validasi login admin (sesuai file asli Anda)
-    if username == "admin" and password == "12345":
-        messagebox.showinfo("Login Berhasil", f"Selamat datang, {username}!")
-        buka_form_registrasi() # Pindah ke form registrasi
-    else:
-        messagebox.showerror("Login Gagal", "Username atau Password salah!")
+        tk.Label(self.root, text="Username").pack()
+        self.user = tk.Entry(self.root)
+        self.user.pack()
 
-#FUNGSI TAB REGISTRASI
+        tk.Label(self.root, text="Password").pack()
+        self.pw = tk.Entry(self.root, show="*")
+        self.pw.pack()
 
-def buka_form_registrasi():
-    # Sembunyikan jendela login utama
-    root.withdraw()
-    
-    # Buat jendela baru untuk registrasi
-    reg_window = tk.Toplevel()
-    reg_window.title("Form Registrasi Client")
-    reg_window.geometry("350x500")
-    
-    # Protokol jika jendela registrasi ditutup (kembali ke login atau keluar semua)
-    reg_window.protocol("WM_DELETE_WINDOW", root.destroy)
+        tk.Button(self.root, text="Login", command=self.login).pack(pady=10)
+        tk.Button(self.root, text="Register Client", command=self.show_register).pack()
 
-    def handle_register():
-        email = entry_email.get()
-        username = entry_user_reg.get()
-        password = entry_pass_reg.get()
-        address = entry_address.get()
-        postcode = entry_postcode.get()
+    def login(self):
+        username = self.user.get()
+        password = self.pw.get()
 
-        if not email or not username or not password:
-            messagebox.showwarning("Input Error", "Email, Username, dan Password wajib diisi!")
+        conn = sqlite3.connect("users_data.db")
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM users WHERE username=? AND password=?",
+                       (username, password))
+        data = cursor.fetchone()
+        conn.close()
+
+        if data:
+            messagebox.showinfo("Sukses", "Login berhasil!")
+            self.show_admin()
+        else:
+            messagebox.showerror("Error", "Login gagal!")
+
+    # ================= REGISTER CLIENT =================
+    def show_register(self):
+        self.clear()
+
+        tk.Label(self.root, text="REGISTRASI CLIENT", font=("Arial", 14)).pack(pady=20)
+
+        tk.Label(self.root, text="Nama").pack()
+        self.nama = tk.Entry(self.root)
+        self.nama.pack()
+
+        tk.Button(self.root, text="Simpan", command=self.save_client).pack(pady=10)
+        tk.Button(self.root, text="Kembali", command=self.show_login).pack()
+
+    def save_client(self):
+        nama = self.nama.get()
+
+        if not nama:
+            messagebox.showwarning("Error", "Nama wajib diisi!")
             return
 
-        print(f"Data Terdaftar:\nEmail: {email}\nUser: {username}\nAlamat: {address}\nKodepos: {postcode}")
-        messagebox.showinfo("Registrasi Berhasil", f"Akun {username} telah berhasil dibuat!")
+        conn = sqlite3.connect("users_data.db")
+        cursor = conn.cursor()
 
-    # --- Layout Form Registrasi ---
-    tk.Label(reg_window, text="FORM REGISTRASI CLIENT", font=("Arial", 12, "bold")).pack(pady=10)
+        cursor.execute("INSERT INTO clients (nama) VALUES (?)", (nama,))
+        conn.commit()
+        conn.close()
 
-    tk.Label(reg_window, text="Email (Wajib):").pack(pady=(5, 0))
-    entry_email = tk.Entry(reg_window, width=30)
-    entry_email.pack(pady=5)
+        messagebox.showinfo("Sukses", "Data tersimpan!")
+        self.show_login()
 
-    tk.Label(reg_window, text="Username (Wajib):").pack(pady=(5, 0))
-    entry_user_reg = tk.Entry(reg_window, width=30)
-    entry_user_reg.pack(pady=5)
+    # ================= ADMIN PANEL =================
+    def show_admin(self):
+        self.clear()
 
-    tk.Label(reg_window, text="Password (Wajib):").pack(pady=(5, 0))
-    entry_pass_reg = tk.Entry(reg_window, width=30, show="*")
-    entry_pass_reg.pack(pady=5)
+        tk.Label(self.root, text="PANEL ADMIN", font=("Arial", 14)).pack(pady=10)
 
-    tk.Label(reg_window, text="Address (Optional):").pack(pady=(5, 0))
-    entry_address = tk.Entry(reg_window, width=30)
-    entry_address.pack(pady=5)
+        listbox = tk.Listbox(self.root, width=40)
+        listbox.pack(pady=10)
 
-    tk.Label(reg_window, text="Postcode (Optional):").pack(pady=(5, 0))
-    entry_postcode = tk.Entry(reg_window, width=30)
-    entry_postcode.pack(pady=5)
+        conn = sqlite3.connect("users_data.db")
+        cursor = conn.cursor()
 
-    btn_register = tk.Button(reg_window, text="Daftar Sekarang", command=handle_register, bg="#4CAF50", fg="white", width=20)
-    btn_register.pack(pady=25)
+        cursor.execute("SELECT nama FROM clients")
+        data = cursor.fetchall()
+        conn.close()
 
-root.mainloop()
+        if data:
+            for d in data:
+                listbox.insert(tk.END, d[0])
+        else:
+            listbox.insert(tk.END, "Belum ada data")
 
+        tk.Button(self.root, text="Logout", command=self.show_login).pack(pady=10)
+
+# ================= MAIN =================
+if __name__ == "__main__":
+    init_db()
+    root = tk.Tk()
+    app = App(root)
+    root.mainloop()
