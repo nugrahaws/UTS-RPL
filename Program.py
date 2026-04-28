@@ -1,5 +1,23 @@
 import tkinter as tk
 from tkinter import messagebox
+import sqlite3
+
+# Koneksi ke database
+conn = sqlite3.connect("users.db")
+cursor = conn.cursor()
+
+# Buat tabel jika belum ada
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT,
+    username TEXT,
+    password TEXT,
+    address TEXT,
+    postcode TEXT
+)
+""")
+conn.commit()
 
 # TAB LOGIN ADMIIN
 def handle_login():
@@ -98,3 +116,4 @@ def buka_form_registrasi():
     btn_register.pack(pady=25)
 
 root.mainloop()
+
