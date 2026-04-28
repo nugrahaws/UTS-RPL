@@ -23,9 +23,9 @@ def init_db():
             nama TEXT,
             nim TEXT,
             jurusan TEXT,
-            prodi TEXT,
+            angkatan TEXT,
             tanggal_lahir TEXT,
-            tempat_tinggal TEXT,
+            tempat_lahir TEXT,
             jenis_kelamin TEXT,
             alamat TEXT
         )
