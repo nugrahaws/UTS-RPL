@@ -95,8 +95,8 @@ class App:
         tk.Label(self.root, text="REGISTRASI CLIENT", font=("Arial", 14)).pack(pady=10)
 
         fields = [
-            "Nama", "NIM", "Jurusan", "Prodi",
-            "Tanggal Lahir", "Tempat Tinggal",
+            "Nama", "NIM", "Jurusan", "Angkatan",
+            "Tanggal Lahir", "Tempat Lahir",
             "Jenis Kelamin", "Alamat"
         ]
 
